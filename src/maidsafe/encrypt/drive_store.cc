@@ -246,11 +246,11 @@ void DriveStore::SetMaxDiskUsage(DiskUsage max_disk_usage) {
   max_disk_usage_ = max_disk_usage;
 }
 
-DiskUsage DriveStore::GetMaxDiskUsage() {
+DiskUsage DriveStore::MaxDiskUsage() {
   return max_disk_usage_;
 }
 
-DiskUsage DriveStore::GetCurrentDiskUsage() {
+DiskUsage DriveStore::CurrentDiskUsage() {
   return current_disk_usage_;
 }
 

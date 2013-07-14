@@ -29,10 +29,6 @@ include(../../cmake_modules/standard_setup.cmake)
 include_directories(${common_SOURCE_DIR}/include)
 include_directories(${private_SOURCE_DIR}/include)
 include_directories(${passport_SOURCE_DIR}/include)
-include_directories(${rudp_SOURCE_DIR}/include)
-include_directories(${routing_SOURCE_DIR}/include)
-include_directories(${nfs_SOURCE_DIR}/include)
-
 
 #==================================================================================================#
 # Set up all files as GLOBs                                                                        #
@@ -44,19 +40,12 @@ glob_dir(EncryptTests ${PROJECT_SOURCE_DIR}/src/maidsafe/encrypt/tests Tests)
 #==================================================================================================#
 # Define MaidSafe libraries and executables                                                        #
 #==================================================================================================#
-ms_add_static_library(demo_encrypt ${EncryptAllFiles})
-list(REMOVE_ITEM EncryptAllFiles
-       "${PROJECT_SOURCE_DIR}/include/maidsafe/encrypt/drive_store.h"
-       "${PROJECT_SOURCE_DIR}/src/maidsafe/encrypt/drive_store.cc")
 ms_add_static_library(encrypt ${EncryptAllFiles})
-
 target_link_libraries(maidsafe_encrypt maidsafe_private)
-target_link_libraries(maidsafe_demo_encrypt maidsafe_private)
-set_target_properties(maidsafe_demo_encrypt PROPERTIES COMPILE_DEFINITIONS "MAIDSAFE_DRIVE_DEMO")
 
 if(MaidsafeTesting)
   ms_add_executable(TESTencrypt "Tests/Encrypt" ${EncryptTestsAllFiles})
-  target_link_libraries(TESTencrypt maidsafe_encrypt maidsafe_routing maidsafe_nfs)
+  target_link_libraries(TESTencrypt maidsafe_encrypt)
 endif()
 
 rename_outdated_built_exes()

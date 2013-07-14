@@ -125,10 +125,7 @@ void DebugPrint(bool encrypting,
 }  // unnamed namespace
 
 
-SelfEncryptor::SelfEncryptor(DataMapPtr data_map,
-                             ClientNfs& client_nfs,
-                             DataStore& data_store,
-                             int num_procs)
+SelfEncryptor::SelfEncryptor(DataMapPtr data_map, DataStore& data_store, int num_procs)
     : data_map_(data_map ? data_map : std::make_shared<DataMap>()),
       original_data_map_(std::make_shared<DataMap>(*data_map)),
       sequencer_(new Sequencer),
@@ -144,7 +141,6 @@ SelfEncryptor::SelfEncryptor(DataMapPtr data_map,
       retrievable_from_queue_(0),
       chunk0_raw_(),
       chunk1_raw_(),
-      client_nfs_(client_nfs),
       data_store_(data_store),
       current_position_(0),
       prepared_for_writing_(false),
@@ -524,16 +520,6 @@ int SelfEncryptor::DecryptChunk(const uint32_t &chunk_num, byte *data) {
       LOG(kError) << "Failed to get local data for "
                   << EncodeToBase32(data_map_->chunks[chunk_num].hash);
       return kMissingChunk;
-
-      // std::future<ImmutableData> future(client_nfs_.Get<ImmutableData>(key));
-      // try {
-      //   content = future.get().data();
-      // }
-      // catch(...) {  // temporary catch all!!!
-      //   LOG(kError) << "Failed to get data for "
-      //               << EncodeToBase32(data_map_->chunks[chunk_num].hash);
-      //   throw;
-      // }
     }
   }
 
@@ -1306,9 +1292,7 @@ void SelfEncryptor::DeleteAllChunks() {
     try {
       data_store_.Delete(key);
     }
-    catch(...) {
-      client_nfs_.Delete<ImmutableData>(key, nullptr);
-    }
+    catch(...) {}
   }
   std::lock_guard<std::mutex> data_unique_guard(data_mutex_);
   data_map_->chunks.clear();
@@ -1405,12 +1389,7 @@ void SelfEncryptor::DeleteChunk(const uint32_t &chunk_num) {
     data_store_.Delete(key);
   }
   catch(...) {
-    try {
-      client_nfs_.Delete<ImmutableData>(key, nullptr);
-    }
-    catch(...) {
-      LOG(kWarning) << "Failed to delete chunk " << chunk_num;
-    }
+    LOG(kWarning) << "Failed to delete chunk " << chunk_num;
   }
 }
 

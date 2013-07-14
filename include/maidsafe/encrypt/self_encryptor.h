@@ -21,15 +21,7 @@ License.
 #include <string>
 #include <tuple>
 
-#include "maidsafe/nfs/nfs.h"
-
-#ifdef MAIDSAFE_DRIVE_DEMO
- #include "maidsafe/encrypt/drive_store.h"
- typedef maidsafe::drive_store::DriveStore DataStore;
-#else
- #include "maidsafe/data_store/permanent_store.h"
- typedef maidsafe::data_store::PermanentStore DataStore;
-#endif
+#include "maidsafe/encrypt/drive_store.h"
 #include "maidsafe/encrypt/config.h"
 #include "maidsafe/encrypt/data_map.h"
 
@@ -50,12 +42,9 @@ void DecryptDataMap(const Identity& parent_id,
 
 class SelfEncryptor {
  public:
-  typedef nfs::ClientMaidNfs ClientNfs;
+  typedef maidsafe::drive_store::DriveStore DataStore;
 
-  SelfEncryptor(DataMapPtr data_map,
-                ClientNfs& client_nfs,
-                DataStore& data_store,
-                int num_procs = 0);
+  SelfEncryptor(DataMapPtr data_map, DataStore& data_store, int num_procs = 0);
   ~SelfEncryptor();
   bool Write(const char *data, const uint32_t &length, const uint64_t &position);
   bool Read(char *data, const uint32_t &length, const uint64_t &position);
@@ -164,7 +153,6 @@ class SelfEncryptor {
   const uint32_t kQueueCapacity_;
   uint32_t retrievable_from_queue_;
   std::shared_ptr<byte> chunk0_raw_, chunk1_raw_;
-  ClientNfs& client_nfs_;
   DataStore& data_store_;
   uint64_t current_position_;
   bool prepared_for_writing_, flushed_;

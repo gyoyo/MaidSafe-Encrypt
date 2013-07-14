@@ -50,8 +50,8 @@ class DriveStore {
 
   void SetMaxDiskUsage(DiskUsage max_disk_usage);
 
-  DiskUsage GetMaxDiskUsage();
-  DiskUsage GetCurrentDiskUsage();
+  DiskUsage MaxDiskUsage();
+  DiskUsage CurrentDiskUsage();
 
  private:
   DriveStore(const DriveStore&);
