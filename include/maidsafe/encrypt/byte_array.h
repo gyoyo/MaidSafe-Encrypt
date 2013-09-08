@@ -18,12 +18,13 @@ License.
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include "cryptopp/config.h"
 
 namespace maidsafe {
 namespace encrypt {
 
-typedef std::shared_ptr<byte> ByteArray;
+typedef std::vector<byte> ByteArray;
 
 ByteArray GetNewByteArray(const uint32_t &size);
 

@@ -42,7 +42,7 @@ struct ChunkDetails {
   byte pre_hash[crypto::SHA512::DIGESTSIZE];  // SHA512 of unprocessed src data
   // pre hashes of chunks n-1 and n-2, only valid if chunk n-1 or n-2 has
   // modified content
-  boost::shared_array<byte> old_n1_pre_hash, old_n2_pre_hash;
+  std::vector<byte> old_n1_pre_hash, old_n2_pre_hash;
   // If the pre_hash hasn't been calculated, or if data has been written to the
   // chunk since the pre_hash was last calculated, pre_hash_ok should be false.
   PreHashState pre_hash_state;

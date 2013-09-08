@@ -25,7 +25,11 @@ License.
 namespace maidsafe {
 namespace encrypt {
 
-typedef std::map<uint64_t, ByteArray> SequenceBlockMap;
+static_assert(!std::is_same<std::uint8_t, unsigned char>::value ,
+"This library requires std::uint8_t to be implemented as unsigned char.");
+
+typedef std::vector<byte> Bytes;
+typedef std::map<uint64_t, Bytes> SequenceBlockMap;
 typedef SequenceBlockMap::value_type SequenceBlock;
 
 class Sequencer {

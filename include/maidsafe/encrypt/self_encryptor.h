@@ -101,7 +101,7 @@ class XORFilter : public CryptoPP::Bufferless<CryptoPP::Filter> {
 
 }  // namespace detail
 
-class Sequencer;
+
 
 crypto::CipherText EncryptDataMap(const Identity& parent_id,
                                   const Identity& this_id,
@@ -689,13 +689,13 @@ void SelfEncryptor<Storage>::GetPadIvKey(uint32_t this_chunk_num,
   uint32_t n_1_chunk = (this_chunk_num + num_chunks - 1) % num_chunks;
   uint32_t n_2_chunk = (this_chunk_num + num_chunks - 2) % num_chunks;
 
-  const byte* n_1_pre_hash = data_map_->chunks[this_chunk_num].old_n1_pre_hash.get();
-  const byte* n_2_pre_hash = data_map_->chunks[this_chunk_num].old_n2_pre_hash.get();
+  const auto n_1_pre_hash = data_map_->chunks[this_chunk_num].old_n1_pre_hash;
+  const auto n_2_pre_hash = data_map_->chunks[this_chunk_num].old_n2_pre_hash;
   if (writing) {
-    if (!n_1_pre_hash) {
-      assert(!n_2_pre_hash);
-      data_map_->chunks[this_chunk_num].old_n1_pre_hash.reset(new byte[crypto::SHA512::DIGESTSIZE]);
-      data_map_->chunks[this_chunk_num].old_n2_pre_hash.reset(new byte[crypto::SHA512::DIGESTSIZE]);
+    if (!n_1_pre_hash.empty()) {
+      assert(!n_2_pre_hash.empty());
+      data_map_->chunks[this_chunk_num].old_n1_pre_hash.clear();
+      data_map_->chunks[this_chunk_num].old_n2_pre_hash.clear();
     }
     n_1_pre_hash = &data_map_->chunks[n_1_chunk].pre_hash[0];
     n_2_pre_hash = &data_map_->chunks[n_2_chunk].pre_hash[0];
