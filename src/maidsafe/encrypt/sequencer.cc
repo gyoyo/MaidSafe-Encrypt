@@ -15,138 +15,57 @@
 
     See the Licences for the specific language governing permissions and limitations relating to
     use of the MaidSafe Software.                                                                 */
-
-#include "boost/assert.hpp"
-#include "maidsafe/common/log.h"
 #include "maidsafe/encrypt/sequencer.h"
+
+#include <iterator>
+#include <algorithm>
+
+#include "maidsafe/common/log.h"
 #include "maidsafe/encrypt/config.h"
 
 namespace maidsafe {
 namespace encrypt {
 
-namespace {
-const SequenceBlock kInvalidSeqBlock(std::make_pair(
-    std::numeric_limits<uint64_t>::max(), ByteArray()));
-}  // unnamed namespace
+void Sequencer::Add(const Chars& data,
+                    const uint64_t &position) {
 
-int Sequencer::Add(const char *data,
-                   const uint32_t &length,
-                   const uint64_t &position) {
-  try {
-    // If the insertion point is past the current end, just insert a new element
-    if (blocks_.empty() || position >
-        (*blocks_.rbegin()).first + Size((*blocks_.rbegin()).second)) {
-      auto result = blocks_.insert(std::make_pair(position,
-                                                  GetNewByteArray(length)));
-      BOOST_ASSERT(result.second);
-      if (MemCopy((*(result.first)).second, 0, data, length) != length) {
-        LOG(kError) << "Error adding " << length << " bytes to sequencer at "
-                    << position;
-        return kSequencerAddError;
-      }
-      return kSuccess;
-    }
+  auto found = Find(position);
 
-    auto lower_itr = blocks_.lower_bound(position);
-    auto upper_itr = blocks_.upper_bound(position + length);
-
-    // Check to see if new data spans part of, or joins onto, data of element
-    // preceding lower_itr
-    if (lower_itr == blocks_.end() ||
-        (lower_itr != blocks_.begin() && (*lower_itr).first != position)) {
-      --lower_itr;
-      if ((*lower_itr).first + Size((*lower_itr).second) < position)
-        ++lower_itr;
-    }
-
-    const uint64_t &lower_start_position((*lower_itr).first);
-    uint64_t new_start_position(position);
-    uint32_t pre_overlap_size(0);
-    bool reduced_upper(false);
-
-    if (position > lower_start_position) {
-      BOOST_ASSERT(position - lower_start_position <
-                   std::numeric_limits<uint32_t>::max());
-      pre_overlap_size = static_cast<uint32_t>(position - lower_start_position);
-      new_start_position = lower_start_position;
-    }
-
-    // Check to see if new data spans part of, or joins onto, data of element
-    // preceding upper_itr
-    if (upper_itr != blocks_.begin()) {
-      --upper_itr;
-      reduced_upper = true;
-    }
-    const uint64_t &upper_start_position((*upper_itr).first);
-    uint32_t upper_size(Size((*upper_itr).second));
-
-    uint64_t post_overlap_posn(position + length);
-    uint32_t post_overlap_size(0);
-
-    if ((position + length) < (upper_start_position + upper_size) &&
-        reduced_upper) {
-      BOOST_ASSERT(upper_size > post_overlap_posn - upper_start_position);
-      BOOST_ASSERT(upper_size - (post_overlap_posn - upper_start_position) <
-                   std::numeric_limits<uint32_t>::max());
-      post_overlap_size = upper_size -
-          static_cast<uint32_t>(post_overlap_posn - upper_start_position);
-    }
-
-    ByteArray new_entry =
-        GetNewByteArray(pre_overlap_size + length + post_overlap_size);
-
-    if (MemCopy(new_entry, 0, (*lower_itr).second.get(), pre_overlap_size) !=
-        pre_overlap_size) {
-      LOG(kError) << "Error adding pre-overlap";
-      return kSequencerAddError;
-    }
-
-    if (MemCopy(new_entry, pre_overlap_size, data, length) != length) {
-      LOG(kError) << "Error adding mid-overlap";
-      return kSequencerAddError;
-    }
-
-    if (MemCopy(new_entry,
-                pre_overlap_size + length,
-                (*upper_itr).second.get() +
-                    (post_overlap_posn - upper_start_position),
-                post_overlap_size) != post_overlap_size) {
-      LOG(kError) << "Error adding post-overlap";
-      return kSequencerAddError;
-    }
-
-    if (reduced_upper)
-      ++upper_itr;
-    blocks_.erase(lower_itr, upper_itr);
-    auto result = blocks_.insert(std::make_pair(new_start_position, new_entry));
-    BOOST_ASSERT(result.second);
-    static_cast<void>(result);
+  if(found == std::end(blocks_)) {
+     blocks_.insert(std::make_pair(position, data));
+     return;
   }
-  catch(const std::exception &e) {
-    // TODO(DI) here we need to catch the error - likely out of mem.  We
-    // should then set up a flilestream in boost::tmp_dir, empty sequencer and
-    // this write data to the file and set a flag to say we have written a
-    // fstream.  All further writes to fstream.  On destruct - write all data
-    // from fstream to SE::write method. This will encrypt whole file.  Write
-    // 0s where there are 0s in the fstream.  Read from fstream as well as
-    // write, maybe make protected getter/setter and we can run all tests
-    // against the fstream as well.  Else fail ???
-    LOG(kError) << e.what();
-    return kSequencerException;
-  }
-  return kSuccess;
+  if(found->second.size() < (position - found->first + data.size()))
+    found->second.resize(position - found->first + data.size());
+  std::move(std::begin(found->second) + (position - found->first),
+            std::end(found->second),
+            std::back_inserter(data));
+  found->second.erase(std::remove(std::begin(found->second) + (position - found->first),
+                                 std::end(found->second)));
+//TODO(dirvine) fix spanning block !!!
 }
 
-ByteArray Sequencer::Get(const uint64_t &position) {
-  auto itr(blocks_.find(position));
-  if (itr == blocks_.end())
-    return ByteArray();
-  ByteArray result((*itr).second);
-  blocks_.erase(itr);
-  return result;
+std::map<uint64_t, Chars>::iterator Sequencer::Find(int32_t position) {
+  return std::find_if(std::begin(blocks_), std::end(blocks_),
+                              [position] (const std::pair<uint64_t, Bytes>& entry)
+    {
+      return (entry.first + entry.second.size() >= static_cast<size_t>(position));
+    });
 }
 
-SequenceBlock Sequencer::GetFirst() {
+Chars Sequencer::Get(const uint64_t &position) {
+  auto found = Find(position);
+  Chars chars;
+  std::move(std::begin(found->second) + (position - found->first),
+            std::end(found->second),
+            std::back_inserter(chars));
+  found->second.erase(std::remove((std::begin(found->second) + (position - found->first)),
+                                 std::end(found->second)));
+  return chars;
+}
+
+
+Chars Sequencer::GetFirst() {
   if (blocks_.empty())
     return kInvalidSeqBlock;
   auto result(*blocks_.begin());
