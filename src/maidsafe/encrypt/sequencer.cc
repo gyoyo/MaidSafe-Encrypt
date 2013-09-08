@@ -40,8 +40,8 @@ void Sequencer::Add(const Chars& data,
   std::move(std::begin(found->second) + (position - found->first),
             std::end(found->second),
             std::back_inserter(data));
-  found->second.erase(std::remove(std::begin(found->second) + (position - found->first),
-                                 std::end(found->second)));
+  found->second.erase((std::begin(found->second) + (position - found->first)),
+                                 std::end(found->second));
 //TODO(dirvine) fix spanning block !!!
 }
 
@@ -59,8 +59,8 @@ Chars Sequencer::Get(const uint64_t &position) {
   std::move(std::begin(found->second) + (position - found->first),
             std::end(found->second),
             std::back_inserter(chars));
-  found->second.erase(std::remove((std::begin(found->second) + (position - found->first)),
-                                 std::end(found->second)));
+  found->second.erase((std::begin(found->second) + (position - found->first)),
+                                 std::end(found->second));
   return chars;
 }
 
