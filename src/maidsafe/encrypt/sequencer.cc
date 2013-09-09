@@ -42,7 +42,20 @@ void Sequencer::Add(const Chars& data,
             std::back_inserter(data));
   found->second.erase((std::begin(found->second) + (position - found->first)),
                                  std::end(found->second));
-//TODO(dirvine) fix spanning block !!!
+//spanning block !!!
+  auto current = found;
+  auto next = ++found;
+  while (current->first + current->second.size() >= next->first) {
+    if (current->first + current->second.size() >= next->first + next->second.size()) {
+      ++next;
+      continue;
+    }
+    std::move(std::begin(next->second) +
+              (current->first + current->second.size() >= next->first + next->second.size()),
+              std::end(next->second),
+              std::back_inserter(current));
+    blocks_.erase(next);
+  }
 }
 
 std::map<uint64_t, Chars>::iterator Sequencer::Find(int32_t position) {
@@ -65,73 +78,55 @@ Chars Sequencer::Get(const uint64_t &position) {
 }
 
 
-Chars Sequencer::GetFirst() {
-  if (blocks_.empty())
-    return kInvalidSeqBlock;
-  auto result(*blocks_.begin());
-  blocks_.erase(blocks_.begin());
-  return result;
-}
+//Chars Sequencer::GetFirst() {
+//  if (blocks_.empty())
+//    return kInvalidSeqBlock;
+//  auto result(*blocks_.begin());
+//  blocks_.erase(blocks_.begin());
+//  return result;
+//}
 
-SequenceBlock Sequencer::PeekBeyond(const uint64_t &position) const {
-  auto itr(blocks_.lower_bound(position));
-  return itr == blocks_.end() ? kInvalidSeqBlock : *itr;
-}
+//SequenceBlock Sequencer::PeekBeyond(const uint64_t &position) const {
+//  auto itr(blocks_.lower_bound(position));
+//  return itr == blocks_.end() ? kInvalidSeqBlock : *itr;
+//}
 
-SequenceBlock Sequencer::Peek(const uint32_t &length,
-                              const uint64_t &position) const {
-  if (blocks_.empty())
-    return kInvalidSeqBlock;
+//SequenceBlock Sequencer::Peek(const uint32_t &length,
+//                              const uint64_t &position) const {
+//  if (blocks_.empty())
+//    return kInvalidSeqBlock;
 
-  auto itr(blocks_.lower_bound(position));
-  if (itr != blocks_.end() && (*itr).first == position)
-    return *itr;
+//  auto itr(blocks_.lower_bound(position));
+//  if (itr != blocks_.end() && (*itr).first == position)
+//    return *itr;
 
-  if (itr == blocks_.end() || itr != blocks_.begin())
-    --itr;
+//  if (itr == blocks_.end() || itr != blocks_.begin())
+//    --itr;
 
-  if ((*itr).first < position) {
-    if ((*itr).first + Size((*itr).second) > position)
-      return *itr;
-    else
-      ++itr;
-  }
+//  if ((*itr).first < position) {
+//    if ((*itr).first + Size((*itr).second) > position)
+//      return *itr;
+//    else
+//      ++itr;
+//  }
 
-  if (itr == blocks_.end())
-    return kInvalidSeqBlock;
+//  if (itr == blocks_.end())
+//    return kInvalidSeqBlock;
 
-  return ((*itr).first < length + position) ? *itr : kInvalidSeqBlock;
-}
+//  return ((*itr).first < length + position) ? *itr : kInvalidSeqBlock;
+//}
 
 void Sequencer::Truncate(const uint64_t &position) {
   if (blocks_.empty())
     return;
-
-  // Find the block which spans position, or if none, the first one starting
-  // after position
-  auto lower_itr(blocks_.lower_bound(position));
-  if (lower_itr == blocks_.end() ||
-      (lower_itr != blocks_.begin() && (*lower_itr).first != position)) {
-    --lower_itr;
+  auto found = Find(position);
+  if (found->first == position) {
+    blocks_.erase(found, blocks_.end());
+  } else {
+    found->second.erase(std::begin(found->second) + position - found->first,
+                        std::end(found->second));
+    blocks_.erase(++found, blocks_.end());
   }
-  if ((*lower_itr).first < position) {
-    // If it spans, truncate the block
-    if ((*lower_itr).first + Size((*lower_itr).second) > position) {
-      uint32_t reduced_size = static_cast<uint32_t>((*lower_itr).first +
-                              Size((*lower_itr).second) - position);
-      ByteArray temp(GetNewByteArray(reduced_size));
-#ifndef NDEBUG
-      uint32_t copied =
-#endif
-          MemCopy(temp, 0, (*lower_itr).second.get(), reduced_size);
-      BOOST_ASSERT(reduced_size == copied);
-      (*lower_itr).second = temp;
-    }
-    // Move to first block past position
-    ++lower_itr;
-  }
-
-  blocks_.erase(lower_itr, blocks_.end());
 }
 
 }  // namespace encrypt
