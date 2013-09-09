@@ -37,11 +37,10 @@ void Sequencer::Add(const Chars& data,
   }
   if(found->second.size() < (position - found->first + data.size()))
     found->second.resize(position - found->first + data.size());
-  std::move(std::begin(found->second) + (position - found->first),
-            std::end(found->second),
-            std::back_inserter(data));
-  found->second.erase((std::begin(found->second) + (position - found->first)),
-                                 std::end(found->second));
+  std::move(std::begin(data),
+            std::end(data),
+            std::begin(found->second) + (position - found->first));
+
 //spanning block !!!
   auto current = found;
   auto next = ++found;
@@ -53,14 +52,14 @@ void Sequencer::Add(const Chars& data,
     std::move(std::begin(next->second) +
               (current->first + current->second.size() >= next->first + next->second.size()),
               std::end(next->second),
-              std::back_inserter(current));
+              std::end(current->second));
     blocks_.erase(next);
   }
 }
 
 std::map<uint64_t, Chars>::iterator Sequencer::Find(int32_t position) {
   return std::find_if(std::begin(blocks_), std::end(blocks_),
-                              [position] (const std::pair<uint64_t, Bytes>& entry)
+                              [position] (const std::map<uint64_t, Chars>::value_type& entry)
     {
       return (entry.first + entry.second.size() >= static_cast<size_t>(position));
     });
@@ -71,9 +70,9 @@ Chars Sequencer::Get(const uint64_t &position) {
   Chars chars;
   std::move(std::begin(found->second) + (position - found->first),
             std::end(found->second),
-            std::back_inserter(chars));
-  found->second.erase((std::begin(found->second) + (position - found->first)),
-                                 std::end(found->second));
+            std::begin(chars));
+  found->second.erase(std::begin(found->second) + (position - found->first),
+                      std::end(found->second));
   return chars;
 }
 

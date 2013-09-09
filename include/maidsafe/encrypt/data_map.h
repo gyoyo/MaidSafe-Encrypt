@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include "maidsafe/common/crypto.h"
 #include "boost/shared_array.hpp"
@@ -41,6 +42,29 @@ struct ChunkDetails {
                    pre_hash_state(kEmpty),
                    storage_state(kUnstored),
                    size(0) {}
+  friend
+  bool operator==(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
+    return std::tie(lhs.hash,
+                    lhs.pre_hash,
+                    lhs.old_n1_pre_hash,
+                    lhs.old_n2_pre_hash,
+                    lhs.pre_hash_state,
+                    lhs.storage_state,
+                    lhs.size) ==
+        std::tie(rhs.hash,
+                 rhs.pre_hash,
+                 rhs.old_n1_pre_hash,
+                 rhs.old_n2_pre_hash,
+                 rhs.pre_hash_state,
+                 rhs.storage_state,
+                 rhs.size);
+  }
+
+  friend
+  bool operator!=(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
+    return !operator==(lhs, rhs);
+  }
+
   std::string hash;  // SHA512 of processed chunk
   byte pre_hash[crypto::SHA512::DIGESTSIZE];  // SHA512 of unprocessed src data
   // pre hashes of chunks n-1 and n-2, only valid if chunk n-1 or n-2 has
@@ -56,21 +80,15 @@ struct ChunkDetails {
 struct DataMap {
   DataMap() : chunks(), content() {}
 
-  bool operator==(const DataMap &other) const {
-    if (!this)
-      return false;
-
-    if (content != other.content || chunks.size() != other.chunks.size())
-      return false;
-
-    for (uint32_t i = 0; i < chunks.size(); ++i)
-      if (chunks[i].hash != other.chunks[i].hash)
-        return false;
-
-    return true;
+  friend
+  bool operator==(const DataMap& lhs, const DataMap& rhs)  {
+    return std::tie(lhs.chunks, lhs.content) == std::tie(rhs.chunks, rhs.content);
   }
 
-  bool operator!=(const DataMap &other) const { return !(*this == other); }
+  friend
+  bool operator!=(const DataMap& lhs, const DataMap& rhs)  {
+    return !operator==(lhs, rhs);
+  }
 
   std::vector<ChunkDetails> chunks;
   std::string content;  // Whole data item, if small enough
@@ -78,8 +96,8 @@ struct DataMap {
 
 typedef std::shared_ptr<DataMap> DataMapPtr;
 
-void SerialiseDataMap(const DataMap& data_map, std::string& serialised_data_map);
-void ParseDataMap(const std::string& serialised_data_map, DataMap& data_map);
+std::string SerialiseDataMap(const DataMap& data_map);
+DataMap ParseDataMap(const std::string& serialised_data_map);
 
 }  // namespace encrypt
 

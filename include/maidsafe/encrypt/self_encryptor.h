@@ -63,57 +63,13 @@ namespace encrypt {
 
 namespace detail {
 
-const size_t kPadSize((3 * crypto::SHA512::DIGESTSIZE) -
-                      crypto::AES256_KeySize - crypto::AES256_IVSize);
 
-class XORFilter : public CryptoPP::Bufferless<CryptoPP::Filter> {
- public:
-  XORFilter(CryptoPP::BufferedTransformation *attachment,
-            byte *pad,
-            const size_t &pad_size = kPadSize)
-      : pad_(pad), count_(0), kPadSize_(pad_size) {
-    CryptoPP::Filter::Detach(attachment);
-  }
-  size_t Put2(const byte* in_string, size_t length, int message_end, bool blocking) {
-    if (length == 0) {
-      return AttachedTransformation()->Put2(in_string, length, message_end, blocking);
-    }
-    std::unique_ptr<byte[]> buffer(new byte[length]);
-
-    size_t i(0);
-#ifdef MAIDSAFE_OMP_ENABLED
-// #  pragma omp parallel for shared(buffer, in_string) private(i)
-#endif
-    for (; i != length; ++i) {
-      buffer[i] = in_string[i] ^ pad_[count_ % kPadSize_];
-      ++count_;
-    }
-
-    return AttachedTransformation()->Put2(buffer.get(), length, message_end, blocking);
-  }
-  bool IsolatedFlush(bool, bool) { return false; }
-
- private:
-  XORFilter &operator = (const XORFilter&);
-  XORFilter(const XORFilter&);
-
-  byte *pad_;
-  size_t count_;
-  const size_t kPadSize_;
-};
 
 }  // namespace detail
 
 
 
-crypto::CipherText EncryptDataMap(const Identity& parent_id,
-                                  const Identity& this_id,
-                                  DataMapPtr data_map);
 
-void DecryptDataMap(const Identity& parent_id,
-                    const Identity& this_id,
-                    const std::string &encrypted_data_map,
-                    DataMapPtr data_map);
 
 template<typename Storage>
 class SelfEncryptor {
@@ -239,6 +195,7 @@ class SelfEncryptor {
   uint64_t last_read_position_;
   const uint32_t kMaxBufferSize_;
   std::mutex data_mutex_, chunk_store_mutex_;
+  Chars chars_to_write_;
 };
 
 
@@ -302,6 +259,17 @@ bool SelfEncryptor<Storage>::Write(const char *data,
                                    const uint64_t &position) {
   if (length == 0)
     return true;
+  Chars chars;
+  chars.reserve(length);
+  for (auto i(0); i < length; ++i)
+    chars_to_write_.push_back(data[i]);
+
+  if(chars_to_write_ >= kMaxBufferSize) {
+    //write out to storage 3 ++
+  } else {
+
+  }
+
 
   if (PrepareToWrite(length, position) != kSuccess) {
     LOG(kError) << "Failed to write " << length << " bytes at position " << position;

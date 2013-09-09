@@ -28,7 +28,7 @@ namespace encrypt {
 
 const uint32_t kMinChunkSize(1024);  // bytes
 const uint32_t kDefaultChunkSize(1024 * 1024);  // bytes
-
+const uint32_t kMaxBufferSize = 5 * 1024 * 154;
 enum ReturnCode {
   kSuccess = 0,
   kInvalidChunkIndex = -200001,

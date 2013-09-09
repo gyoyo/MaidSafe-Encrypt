@@ -28,7 +28,7 @@ namespace maidsafe {
 
 namespace encrypt {
 
-void SerialiseDataMap(const DataMap& data_map, std::string& serialised_data_map) {
+std::string SerialiseDataMap(const DataMap& data_map) {
   protobuf::DataMap proto_data_map;
   if (!data_map.content.empty()) {
     proto_data_map.set_content(data_map.content);
@@ -43,8 +43,7 @@ void SerialiseDataMap(const DataMap& data_map, std::string& serialised_data_map)
       chunk_details->set_storage_state(chunk_detail.storage_state);
     }
   }
-  if (!proto_data_map.SerializeToString(&serialised_data_map))
-    ThrowError(CommonErrors::serialisation_error);
+  return proto_data_map.SerializeAsString();
 }
 
 void ExtractChunkDetails(const protobuf::DataMap& proto_data_map, DataMap& data_map) {
@@ -68,10 +67,10 @@ void ExtractChunkDetails(const protobuf::DataMap& proto_data_map, DataMap& data_
   }
 }
 
-void ParseDataMap(const std::string& serialised_data_map, DataMap& data_map) {
+DataMap ParseDataMap(const std::string& serialised_data_map) {
   protobuf::DataMap proto_data_map;
-  if (!proto_data_map.ParseFromString(serialised_data_map))
-    ThrowError(CommonErrors::parsing_error);
+  DataMap data_map;
+  proto_data_map.ParseFromString(serialised_data_map);
 
   if (proto_data_map.has_content() && proto_data_map.chunk_details_size() != 0) {
     data_map.content = proto_data_map.content();
@@ -81,6 +80,7 @@ void ParseDataMap(const std::string& serialised_data_map, DataMap& data_map) {
   } else if (proto_data_map.chunk_details_size() != 0) {
     ExtractChunkDetails(proto_data_map, data_map);
   }
+  return data_map;
 }
 
 }  // namespace encrypt
