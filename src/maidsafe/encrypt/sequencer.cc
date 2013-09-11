@@ -26,8 +26,8 @@
 namespace maidsafe {
 namespace encrypt {
 
-void Sequencer::Add(const Chars& data,
-                    const uint64_t &position) {
+void Sequencer::Write(Chars data,
+                      int64_t position) {
 
   auto found = Find(position);
 
@@ -37,6 +37,7 @@ void Sequencer::Add(const Chars& data,
   }
   if(found->second.size() < (position - found->first + data.size()))
     found->second.resize(position - found->first + data.size());
+
   std::move(std::begin(data),
             std::end(data),
             std::begin(found->second) + (position - found->first));
@@ -47,8 +48,9 @@ void Sequencer::Add(const Chars& data,
   while (current->first + current->second.size() >= next->first) {
     if (current->first + current->second.size() >= next->first + next->second.size()) {
       ++next;
-      continue;
+      break;
     }
+    current->second.resize(current->second.size() + next->second.size());
     std::move(std::begin(next->second) +
               (current->first + current->second.size() >= next->first + next->second.size()),
               std::end(next->second),
@@ -59,63 +61,33 @@ void Sequencer::Add(const Chars& data,
 
 std::map<uint64_t, Chars>::iterator Sequencer::Find(int32_t position) {
   return std::find_if(std::begin(blocks_), std::end(blocks_),
-                              [position] (const std::map<uint64_t, Chars>::value_type& entry)
+                              [position] (const std::map<int64_t, Chars>::value_type& entry)
     {
       return (entry.first + entry.second.size() >= static_cast<size_t>(position));
     });
 }
 
-Chars Sequencer::Get(const uint64_t &position) {
+Chars Sequencer::Fetch(int64_t position) {
   auto found = Find(position);
   Chars chars;
   std::move(std::begin(found->second) + (position - found->first),
             std::end(found->second),
             std::begin(chars));
-  found->second.erase(std::begin(found->second) + (position - found->first),
+ found->second.erase(std::begin(found->second) + (position - found->first),
                       std::end(found->second));
   return chars;
 }
 
+Chars Sequencer::Read(int64_t position) const {
+  auto found = Find(position);
+  Chars chars;
+  std::copy(std::begin(found->second) + (position - found->first),
+            std::end(found->second),
+            std::begin(chars));
+  return chars;
+}
 
-//Chars Sequencer::GetFirst() {
-//  if (blocks_.empty())
-//    return kInvalidSeqBlock;
-//  auto result(*blocks_.begin());
-//  blocks_.erase(blocks_.begin());
-//  return result;
-//}
-
-//SequenceBlock Sequencer::PeekBeyond(const uint64_t &position) const {
-//  auto itr(blocks_.lower_bound(position));
-//  return itr == blocks_.end() ? kInvalidSeqBlock : *itr;
-//}
-
-//SequenceBlock Sequencer::Peek(const uint32_t &length,
-//                              const uint64_t &position) const {
-//  if (blocks_.empty())
-//    return kInvalidSeqBlock;
-
-//  auto itr(blocks_.lower_bound(position));
-//  if (itr != blocks_.end() && (*itr).first == position)
-//    return *itr;
-
-//  if (itr == blocks_.end() || itr != blocks_.begin())
-//    --itr;
-
-//  if ((*itr).first < position) {
-//    if ((*itr).first + Size((*itr).second) > position)
-//      return *itr;
-//    else
-//      ++itr;
-//  }
-
-//  if (itr == blocks_.end())
-//    return kInvalidSeqBlock;
-
-//  return ((*itr).first < length + position) ? *itr : kInvalidSeqBlock;
-//}
-
-void Sequencer::Truncate(const uint64_t &position) {
+void Sequencer::Truncate(uint64_t position) {
   if (blocks_.empty())
     return;
   auto found = Find(position);
@@ -126,6 +98,14 @@ void Sequencer::Truncate(const uint64_t &position) {
                         std::end(found->second));
     blocks_.erase(++found, blocks_.end());
   }
+}
+
+size_t Sequencer::size() {
+    auto size(0);
+    for(const auto& block: blocks_) {
+        size += block.second.size();
+    }
+    return size;
 }
 
 }  // namespace encrypt

@@ -34,25 +34,17 @@ class Sequencer {
   // Adds a new block to the map.  If this overlaps or joins any existing ones,
   // the new block is set to cover the total span of all the overlapping blocks
   // and the old ones are removed.
-  void Add(const Chars& data, const uint64_t &position);
+  void Write(const char* data, const uint32_t &length, int64_t position);
   std::map<uint64_t, Chars>::iterator Find(int32_t position);
-  // Returns and removes the block of sequenced data at position in the map.  If
-  // no block exists at position, it returns a default (NULL) ByteArray.
-  Chars Get(const uint64_t &position);
-  // Returns and removes the first block of sequenced data in the map.  If the
-  // map is empty, it returns kInvalidSeqBlock.
-  Chars GetFirst();
-  // Returns without removing the first block of sequenced data in the map which
-  // compares >= position.  If this is the map end, it returns kInvalidSeqBlock.
-  Chars PeekBeyond(const uint64_t &position) const;
-  // Returns without removing the first block of sequenced data in the map which
-  // has data contained within area defined by position and length.  If this is
-  // the map end, it returns kInvalidSeqBlock.
-  Chars Peek(const uint32_t &length, const uint64_t &position) const;
+  // Returns and removes the block of sequenced data at position in the map.
+  char* Fetch(int64_t position);
+  // Returns a copy block of sequenced data at position in the map.
+  char* Read(int64_t position);
   // Removes all blocks after position, and reduces any block spanning position
   // to terminate at position.
-  void Truncate(const uint64_t &position);
+  void Truncate(int64_t position);
   void clear() { blocks_.clear(); }
+  size_t size();
 
  private:
   Sequencer &operator=(const Sequencer&);
