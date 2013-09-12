@@ -24,32 +24,40 @@
 #include <map>
 
 #include "maidsafe/encrypt/utils.h"
+#include "maidsafe/encrypt/self_encryptor.h"
 
 namespace maidsafe {
 namespace encrypt {
 
 class Sequencer {
  public:
-  Sequencer() : blocks_() {}
-  // Adds a new block to the map.  If this overlaps or joins any existing ones,
+  Sequencer(DataMap data_map, GetDataFromStore get_data_functor) : blocks_() {}
+  Sequencer() : blocks_() {}  // open new file (or empty file)
+  explicit Sequencer(DataMap data_map) : blocks_() {}  // open new file (or empty file)
+  // Adds a new block to the map.  If this overlaps or joins any existing blocks,
   // the new block is set to cover the total span of all the overlapping blocks
-  // and the old ones are removed.
-  void Write(const char* data, const uint32_t &length, int64_t position);
+  // and the old blocks are removed.
+  void Write(Chars data, int64_t position);
   std::map<uint64_t, Chars>::iterator Find(int32_t position);
   // Returns and removes the block of sequenced data at position in the map.
-  char* Fetch(int64_t position);
+  Chars Fetch(int64_t position);
   // Returns a copy block of sequenced data at position in the map.
-  char* Read(int64_t position);
+  Chars Read(int64_t position);
   // Removes all blocks after position, and reduces any block spanning position
   // to terminate at position.
   void Truncate(int64_t position);
   void clear() { blocks_.clear(); }
-  size_t size();
+  int64_t size();
 
  private:
+  Chars GetCharsFromStore(int64_t position);  // Retrieve and decrypt
   Sequencer &operator=(const Sequencer&);
   Sequencer(const Sequencer&);
   std::map<uint64_t, Chars> blocks_;
+  DataMap data_map_;
+  DataBuffer<Chars> plaintext_data_buffer_;
+  GetDataFromStore get_data_from_store_;
+  SelfEncryptor self_encryptor_;
 };
 
 }  // namespace encrypt

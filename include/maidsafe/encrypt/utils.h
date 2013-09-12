@@ -35,8 +35,11 @@
 #endif
 
 #include "maidsafe/common/crypto.h"
+#include "maidsafe/data_types/immutable_data.h"
+#include "maidsafe/data_store/data_buffer.h"
 #include "boost/shared_array.hpp"
 #include "maidsafe/encrypt/data_map.h"
+
 
 namespace maidsafe {
 
@@ -99,6 +102,15 @@ crypto::CipherText EncryptDataMap(const Identity& parent_id,
 DataMap DecryptDataMap(const Identity& parent_id,
                     const Identity& this_id,
                     const std::string &encrypted_data_map);
+
+typedef std::function<ImmutableData(ImmutableData::Name)> GetDataFromStore;
+
+// All types to have move ctr / assignment
+struct WriteResults {
+  DataMap new_data_map;
+  DataMap old_data_map;
+  DataBuffer<ImmutableData::Name> ciphertext_data_buffer;
+};
 
 }  // namespace encrypt
 
