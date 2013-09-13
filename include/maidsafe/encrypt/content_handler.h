@@ -99,13 +99,11 @@ class ContentHandler {
   void Write(const char* data, const uint32_t &length, int64_t position);
   char* Read(int64_t length, int64_t position);
   void Truncate(int64_t position);
-  WriteResults Flush();  // old data map is replaced with new datamap
-  WriteResults Close();
+  WriteResults Flush();  // old data map is replaced with new datamap (copy)
+  WriteResults Close();  // Move
   int64_t size() const;
 
 private:
-  DataMap data_map_;
-  GetDataFromStore get_data_from_store_;
   Sequencer sequencer_;
   SelfEncryptor self_encryptor_;
 };

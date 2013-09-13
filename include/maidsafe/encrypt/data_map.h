@@ -20,81 +20,80 @@
 #define MAIDSAFE_ENCRYPT_DATA_MAP_H_
 
 #include <cstdint>
-#include <string>
 #include <vector>
 #include <tuple>
-
-#include "maidsafe/common/crypto.h"
-#include "boost/shared_array.hpp"
-
 
 namespace maidsafe {
 
 namespace encrypt {
 
-struct ChunkDetails {
-  enum PreHashState { kEmpty, kOutdated, kOk };
-  enum StorageState { kStored, kPending, kUnstored };
-  ChunkDetails() : hash(),
-                   pre_hash(),
-                   old_n1_pre_hash(),
-                   old_n2_pre_hash(),
-                   pre_hash_state(kEmpty),
-                   storage_state(kUnstored),
-                   size(0) {}
-  friend
-  bool operator==(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
-    return std::tie(lhs.hash,
-                    lhs.pre_hash,
-                    lhs.old_n1_pre_hash,
-                    lhs.old_n2_pre_hash,
-                    lhs.pre_hash_state,
-                    lhs.storage_state,
-                    lhs.size) ==
-        std::tie(rhs.hash,
-                 rhs.pre_hash,
-                 rhs.old_n1_pre_hash,
-                 rhs.old_n2_pre_hash,
-                 rhs.pre_hash_state,
-                 rhs.storage_state,
-                 rhs.size);
-  }
-
-  friend
-  bool operator!=(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
-    return !operator==(lhs, rhs);
-  }
-
-  std::string hash;  // SHA512 of processed chunk
-  byte pre_hash[crypto::SHA512::DIGESTSIZE];  // SHA512 of unprocessed src data
-  // pre hashes of chunks n-1 and n-2, only valid if chunk n-1 or n-2 has
-  // modified content
-  std::vector<byte> old_n1_pre_hash, old_n2_pre_hash;
-  // If the pre_hash hasn't been calculated, or if data has been written to the
-  // chunk since the pre_hash was last calculated, pre_hash_ok should be false.
-  PreHashState pre_hash_state;
-  StorageState storage_state;
-  uint32_t size;  // Size of unprocessed source data in bytes
-};
+// move only! datamap object
 
 struct DataMap {
   DataMap() : chunks(), content() {}
 
-  friend
+ DataMap(DataMap&& other)
+ : chunks(std::move(other.chunks)),
+   content(std::move(other.content)) {}
+
+ DataMap()
+ : chunks(), content() {}
+
+ ~DataMap() {}
+
   bool operator==(const DataMap& lhs, const DataMap& rhs)  {
     return std::tie(lhs.chunks, lhs.content) == std::tie(rhs.chunks, rhs.content);
   }
 
-  friend
   bool operator!=(const DataMap& lhs, const DataMap& rhs)  {
     return !operator==(lhs, rhs);
   }
 
+  struct ChunkDetails {
+    ChunkDetails() : hash(),
+      pre_hash(),
+      clean(),
+      size(0) {}
+    ChunkDetails(const ChunkDetails& other)
+      : hash(other.hash),
+        pre_hash(other.pre_hash),
+        clean(other.clean),
+        size(other.size){}
+
+   ChunkDetails(ChunkDetails&& other)
+    : hash(std::move(other.hash)),
+      pre_hash(std::move(other.pre_hash)),
+      clean(std::move(other.clean)),
+      size(std::move(other.size)){}
+
+    bool operator==(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
+      return std::tie(lhs.hash,
+                      lhs.pre_hash,
+                      lhs.clean,
+                      lhs.size) ==
+          std::tie(rhs.hash,
+                   rhs.pre_hash,
+                   rhs.clean,
+                   rhs.size);
+    }
+
+    bool operator!=(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
+      return !operator==(lhs, rhs);
+    }
+
+    std::string hash;  // SHA512 of processed chunk
+    byte pre_hash[crypto::SHA512::DIGESTSIZE];  // SHA512 of unprocessed src data
+    bool clean;  // requires to be re-encrypted (new data available)
+    uint32_t size;  // Size of unprocessed source data in bytes
+  };
+
+
   std::vector<ChunkDetails> chunks;
   std::string content;  // Whole data item, if small enough
+private:
+  DataMap(const DataMap&);
+  DataMap& operator=(DataMap&);
 };
-
-typedef std::shared_ptr<DataMap> DataMapPtr;
 
 std::string SerialiseDataMap(const DataMap& data_map);
 DataMap ParseDataMap(const std::string& serialised_data_map);
