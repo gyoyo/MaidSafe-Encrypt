@@ -31,14 +31,14 @@ namespace encrypt {
 
 class Sequencer {
  public:
-  Sequencer(DataMap data_map, GetDataFromStore get_data_functor) : blocks_() {}
+//  Sequencer(DataMap data_map, GetDataFromStore get_data_functor) : blocks_() {}
   Sequencer() : blocks_() {}  // open new file (or empty file)
-  explicit Sequencer(DataMap data_map) : blocks_() {}  // open new file (or empty file)
+//  explicit Sequencer(DataMap data_map) : blocks_() {}  // open new file (or empty file)
   // Adds a new block to the map.  If this overlaps or joins any existing blocks,
   // the new block is set to cover the total span of all the overlapping blocks
   // and the old blocks are removed.
   void Write(Chars data, int64_t position);
-  std::map<uint64_t, Chars>::iterator Find(int32_t position);
+  std::map<int64_t, Chars>::iterator Find(int64_t position);
   // Returns and removes the block of sequenced data at position in the map.
   Chars Fetch(int64_t position);
   // Returns a copy block of sequenced data at position in the map.
@@ -53,11 +53,10 @@ class Sequencer {
   Chars GetCharsFromStore(int64_t position);  // Retrieve and decrypt
   Sequencer &operator=(const Sequencer&);
   Sequencer(const Sequencer&);
-  std::map<uint64_t, Chars> blocks_;
+  std::map<int64_t, Chars> blocks_;
   DataMap data_map_;
-  DataBuffer<Chars> plaintext_data_buffer_;
+ // DataBuffer<Chars> plaintext_data_buffer_;
   GetDataFromStore get_data_from_store_;
-  SelfEncryptor self_encryptor_;
 };
 
 }  // namespace encrypt

@@ -45,7 +45,7 @@ void Sequencer::Write(Chars data,
 //spanning block !!!
   auto current = found;
   auto next = ++found;
-  while (current->first + current->second.size() >= next->first) {
+  while (current->first + current->second.size() >= static_cast<size_t>(next->first)) {
     if (current->first + current->second.size() >= next->first + next->second.size()) {
       ++next;
       break;
@@ -59,7 +59,7 @@ void Sequencer::Write(Chars data,
   }
 }
 
-std::map<uint64_t, Chars>::iterator Sequencer::Find(int32_t position) {
+std::map<int64_t, Chars>::iterator Sequencer::Find(int64_t position) {
   return std::find_if(std::begin(blocks_), std::end(blocks_),
                               [position] (const std::map<int64_t, Chars>::value_type& entry)
     {
@@ -78,7 +78,7 @@ Chars Sequencer::Fetch(int64_t position) {
   return chars;
 }
 
-Chars Sequencer::Read(int64_t position) const {
+Chars Sequencer::Read(int64_t position) {
   auto found = Find(position);
   Chars chars;
   std::copy(std::begin(found->second) + (position - found->first),
@@ -87,7 +87,7 @@ Chars Sequencer::Read(int64_t position) const {
   return chars;
 }
 
-void Sequencer::Truncate(uint64_t position) {
+void Sequencer::Truncate(int64_t position) {
   if (blocks_.empty())
     return;
   auto found = Find(position);
@@ -100,7 +100,7 @@ void Sequencer::Truncate(uint64_t position) {
   }
 }
 
-size_t Sequencer::size() {
+int64_t Sequencer::size() {
     auto size(0);
     for(const auto& block: blocks_) {
         size += block.second.size();

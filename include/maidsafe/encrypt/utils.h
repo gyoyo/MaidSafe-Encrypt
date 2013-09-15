@@ -38,8 +38,8 @@
 #include "maidsafe/data_types/immutable_data.h"
 #include "maidsafe/data_store/data_buffer.h"
 #include "boost/shared_array.hpp"
-#include "maidsafe/encrypt/data_map.h"
 
+class DataMap;
 
 namespace maidsafe {
 
@@ -88,7 +88,7 @@ static_assert(std::is_same<std::uint8_t, unsigned char>::value ,
 "This library requires std::uint8_t to be implemented as unsigned char.");
 
 typedef std::vector<byte> Bytes;
-typedef std::vector<char> Chars;
+typedef std::string Chars;
 typedef std::map<uint64_t, Bytes> SequenceBlockMap;
 //typedef SequenceBlockMap::value_type SequenceBlock;
 
@@ -100,17 +100,12 @@ crypto::CipherText EncryptDataMap(const Identity& parent_id,
                                   const DataMap& data_map);
 
 DataMap DecryptDataMap(const Identity& parent_id,
-                    const Identity& this_id,
-                    const std::string &encrypted_data_map);
+                       const Identity& this_id,
+                       const std::string &encrypted_data_map);
 
 typedef std::function<ImmutableData(ImmutableData::Name)> GetDataFromStore;
 
-// All types to have move ctr / assignment
-struct WriteResults {
-  DataMap new_data_map;
-  DataMap old_data_map;
-  DataBuffer<ImmutableData::Name> ciphertext_data_buffer;
-};
+
 
 }  // namespace encrypt
 

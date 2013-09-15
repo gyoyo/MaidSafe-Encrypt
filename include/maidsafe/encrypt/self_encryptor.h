@@ -64,19 +64,19 @@ namespace encrypt {
 
 class SelfEncryptor {
  public:
-  SelfEncryptor(DataMap data_map, Sequencer& sequencer);
+  explicit SelfEncryptor(); //Sequencer sequencer);
   ~SelfEncryptor();
   bool Encrypt();
 
-  int64_t size() const {
-    return (file_size_ < truncated_file_size_) ? truncated_file_size_ : file_size_;
-  }
+//  int64_t size() const {
+//   // return (file_size_ < truncated_file_size_) ? truncated_file_size_ : file_size_;
+//  }
 
  private:
   SelfEncryptor(const SelfEncryptor&);
   SelfEncryptor(SelfEncryptor&&);
   SelfEncryptor &operator=(SelfEncryptor);
-  DataBuffer<ImmutableData::Name> ciphertext_data_buffer_;
+//  DataBuffer<ImmutableData::Name> ciphertext_data_buffer_;
 };
 
 

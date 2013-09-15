@@ -23,10 +23,13 @@
 #include <vector>
 #include <tuple>
 
+#include "maidsafe/encrypt/utils.h"
+
 namespace maidsafe {
 
 namespace encrypt {
-
+typedef detail::BoundedString<64, 64> PreHash;
+typedef detail::BoundedString<64, 64> PostHash;
 // move only! datamap object
 
 struct DataMap {
@@ -36,15 +39,14 @@ struct DataMap {
  : chunks(std::move(other.chunks)),
    content(std::move(other.content)) {}
 
- DataMap()
- : chunks(), content() {}
-
  ~DataMap() {}
 
+ friend
   bool operator==(const DataMap& lhs, const DataMap& rhs)  {
     return std::tie(lhs.chunks, lhs.content) == std::tie(rhs.chunks, rhs.content);
   }
 
+ friend
   bool operator!=(const DataMap& lhs, const DataMap& rhs)  {
     return !operator==(lhs, rhs);
   }
@@ -52,8 +54,15 @@ struct DataMap {
   struct ChunkDetails {
     ChunkDetails() : hash(),
       pre_hash(),
-      clean(),
+      clean(false),
       size(0) {}
+
+    ChunkDetails(Identity hash, Identity pre_hash, uint32_t size)
+      : hash(hash),
+        pre_hash(pre_hash),
+        clean(true),
+        size(size) {}
+
     ChunkDetails(const ChunkDetails& other)
       : hash(other.hash),
         pre_hash(other.pre_hash),
@@ -66,6 +75,7 @@ struct DataMap {
       clean(std::move(other.clean)),
       size(std::move(other.size)){}
 
+   friend
     bool operator==(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
       return std::tie(lhs.hash,
                       lhs.pre_hash,
@@ -76,13 +86,13 @@ struct DataMap {
                    rhs.clean,
                    rhs.size);
     }
-
+   friend
     bool operator!=(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
       return !operator==(lhs, rhs);
     }
 
-    std::string hash;  // SHA512 of processed chunk
-    byte pre_hash[crypto::SHA512::DIGESTSIZE];  // SHA512 of unprocessed src data
+    PostHash hash;  // SHA512 of processed chunk
+    PreHash pre_hash;  // SHA512 of unprocessed src data
     bool clean;  // requires to be re-encrypted (new data available)
     uint32_t size;  // Size of unprocessed source data in bytes
   };
@@ -97,6 +107,13 @@ private:
 
 std::string SerialiseDataMap(const DataMap& data_map);
 DataMap ParseDataMap(const std::string& serialised_data_map);
+
+// All types to have move ctr / assignment
+struct WriteResults {
+  DataMap new_data_map;
+  DataMap old_data_map;
+  data_store::DataBuffer<ImmutableData::Name> ciphertext_data_buffer;
+};
 
 }  // namespace encrypt
 

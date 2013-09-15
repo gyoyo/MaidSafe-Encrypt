@@ -35,36 +35,22 @@ std::string SerialiseDataMap(const DataMap& data_map) {
   } else {
     for (auto& chunk_detail : data_map.chunks) {
       protobuf::ChunkDetails* chunk_details = proto_data_map.add_chunk_details();
-      chunk_details->set_hash(chunk_detail.hash);
-      chunk_details->set_pre_hash(std::string(reinterpret_cast<char const*>(chunk_detail.pre_hash),
-                                              crypto::SHA512::DIGESTSIZE));
+      assert(chunk_detail.clean && "cannot serialise a dirty data map");
+      chunk_details->set_hash(chunk_detail.hash.string());
+      chunk_details->set_pre_hash(chunk_detail.pre_hash.string());
       chunk_details->set_size(chunk_detail.size);
-      chunk_details->set_pre_hash_state(chunk_detail.pre_hash_state);
-      chunk_details->set_storage_state(chunk_detail.storage_state);
     }
   }
   return proto_data_map.SerializeAsString();
 }
 
 void ExtractChunkDetails(const protobuf::DataMap& proto_data_map, DataMap& data_map) {
-  ChunkDetails temp;
-  for (int n(0); n < proto_data_map.chunk_details_size(); ++n) {
-    temp.hash = proto_data_map.chunk_details(n).hash();
-    std::string pre_hash(proto_data_map.chunk_details(n).pre_hash());
-    if (pre_hash.size() == size_t(crypto::SHA512::DIGESTSIZE)) {
-      for (int ch(0); ch < crypto::SHA512::DIGESTSIZE; ++ch)
-        temp.pre_hash[ch] = pre_hash.at(ch);
-    } else {
-      data_map.chunks.clear();
-      ThrowError(CommonErrors::invalid_string_size);
-    }
-    temp.size = proto_data_map.chunk_details(n).size();
-    temp.pre_hash_state =
-        static_cast<ChunkDetails::PreHashState>(proto_data_map.chunk_details(n).pre_hash_state());
-    temp.storage_state =
-        static_cast<ChunkDetails::StorageState>(proto_data_map.chunk_details(n).storage_state());
-    data_map.chunks.push_back(temp);
-  }
+  data_map.chunks.clear();
+  data_map.chunks.reserve(proto_data_map.chunk_details().size());
+  for (auto& chunk : proto_data_map.chunk_details())
+    data_map.chunks.emplace_back(DataMap::ChunkDetails(PostHash(chunk.hash()),
+                                                       PreHash(chunk.pre_hash()),
+                                                       chunk.size()));
 }
 
 DataMap ParseDataMap(const std::string& serialised_data_map) {

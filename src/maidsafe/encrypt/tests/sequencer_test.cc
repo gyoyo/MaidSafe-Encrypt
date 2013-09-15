@@ -16,15 +16,48 @@
     See the Licences for the specific language governing permissions and limitations relating to
     use of the MaidSafe Software.                                                                 */
 
-package maidsafe.encrypt.protobuf;
+#include <thread>
+#include <array>
+#include <cstdlib>
+#include <string>
 
-message ChunkDetails {
-  required bytes hash = 1;
-  required bytes pre_hash = 2;
-  required uint32 size = 3;
-}
+#ifdef WIN32
+#  pragma warning(push, 1)
+#endif
+#include "cryptopp/aes.h"
+#include "cryptopp/channels.h"
+#include "cryptopp/gzip.h"
+#include "cryptopp/ida.h"
+#include "cryptopp/modes.h"
+#include "cryptopp/mqueue.h"
+#ifdef WIN32
+#  pragma warning(pop)
+#endif
+#include "boost/scoped_array.hpp"
+#include "boost/filesystem.hpp"
 
-message DataMap {
-  repeated ChunkDetails chunk_details = 1;
-  optional bytes content = 2;
-}
+#include "maidsafe/common/log.h"
+#include "maidsafe/common/test.h"
+#include "maidsafe/common/utils.h"
+
+#include "maidsafe/encrypt/utils.h"
+#include "maidsafe/encrypt/sequencer.h"
+
+
+namespace fs = boost::filesystem;
+
+namespace maidsafe {
+
+namespace encrypt {
+
+namespace test {
+
+
+
+
+
+}  // namespace test
+
+}  // namespace encrypt
+
+}  // namespace maidsafe
