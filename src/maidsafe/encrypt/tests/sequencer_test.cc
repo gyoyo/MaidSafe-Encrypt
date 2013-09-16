@@ -51,8 +51,6 @@ TEST_CASE( "Basic construction", "[beh] [sequencer]" ) {
   CHECK(sequencer.size() == ((test_string.size() * 2) + 2U));
 }
 
-
-
 }  // namespace test
 
 }  // namespace encrypt

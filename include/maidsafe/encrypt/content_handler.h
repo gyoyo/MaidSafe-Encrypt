@@ -96,14 +96,20 @@ class ContentHandler {
     return !operator<(lhs, rhs);
   }
 
+  // if write to existing position in data map and it's clean then download that chunk
+  // decrypt and write to sequencer
   void Write(const char* data, const uint32_t &length, int64_t position);
-  char* Read(int64_t length, int64_t position);
+  // read from sequencer, as with above if chunk is on net get it first
+  char* Read(int64_t position, int32_t length);
   void Truncate(int64_t position);
-  WriteResults Flush();  // old data map is replaced with new datamap (copy)
-  WriteResults Close();  // Move
+  // add private members to handle encryption and update of data map.
+  DataMap Flush();  // old data map is replaced with new datamap (copy)
+  DataMap Close();  // Move
   int64_t size() const;
 
 private:
+  WriteResults doFlush();
+  WriteResults doClose();
   Sequencer sequencer_;
   SelfEncryptor self_encryptor_;
 };
