@@ -16,29 +16,7 @@
     See the Licences for the specific language governing permissions and limitations relating to
     use of the MaidSafe Software.                                                                 */
 
-#include <thread>
-#include <array>
-#include <cstdlib>
-#include <string>
-
-#ifdef WIN32
-#  pragma warning(push, 1)
-#endif
-#include "cryptopp/aes.h"
-#include "cryptopp/channels.h"
-#include "cryptopp/gzip.h"
-#include "cryptopp/ida.h"
-#include "cryptopp/modes.h"
-#include "cryptopp/mqueue.h"
-#ifdef WIN32
-#  pragma warning(pop)
-#endif
-#include "boost/scoped_array.hpp"
-#include "boost/filesystem.hpp"
-
-#include "maidsafe/common/log.h"
-#include "maidsafe/common/test.h"
-#include "maidsafe/common/utils.h"
+#include "catch.hpp"
 
 #include "maidsafe/encrypt/utils.h"
 #include "maidsafe/encrypt/sequencer.h"
@@ -52,7 +30,25 @@ namespace encrypt {
 
 namespace test {
 
-
+TEST_CASE( "Basic construction", "[beh] [sequencer]" ) {
+  Sequencer sequencer;
+  std::string test_string("asdfljk");
+  CHECK_NOTHROW(sequencer.Write(test_string , 12));
+  CHECK(sequencer.size() == test_string.size());
+  CHECK(sequencer.Read(12) == test_string);
+  CHECK_NOTHROW(sequencer.Truncate(14));
+  CHECK(sequencer.Read(12) == "as");
+  CHECK(sequencer.Fetch(12) == "as");
+  CHECK(sequencer.Fetch(12).empty());
+  CHECK(sequencer.Read(12).empty());
+  CHECK(sequencer.size() == 0);
+  CHECK_NOTHROW(sequencer.Write(test_string , 12));
+  CHECK(sequencer.size() == test_string.size());
+  CHECK_NOTHROW(sequencer.Write(test_string , 14));
+  CHECK(sequencer.size() == test_string.size() + 2U);
+  CHECK_NOTHROW(sequencer.Write(test_string , 30));
+  CHECK(sequencer.size() == ((test_string.size() * 2) + 2U));
+}
 
 
 

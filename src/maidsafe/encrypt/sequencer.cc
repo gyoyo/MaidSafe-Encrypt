@@ -47,7 +47,8 @@ void Sequencer::Write(Chars data,
   auto next = ++found;
   while (current->first + current->second.size() >= static_cast<size_t>(next->first)) {
     if (current->first + current->second.size() >= next->first + next->second.size()) {
-      ++next;
+      if(next != std::end(blocks_))
+         ++next;
       break;
     }
     current->second.resize(current->second.size() + next->second.size());
@@ -70,20 +71,24 @@ std::map<int64_t, Chars>::iterator Sequencer::Find(int64_t position) {
 Chars Sequencer::Fetch(int64_t position) {
   auto found = Find(position);
   Chars chars;
+  if (found == std::end(blocks_))
+      return chars;
   std::move(std::begin(found->second) + (position - found->first),
             std::end(found->second),
-            std::begin(chars));
+            std::back_inserter(chars));
  found->second.erase(std::begin(found->second) + (position - found->first),
                       std::end(found->second));
+ if(found->second.empty())
+   blocks_.erase(found);
   return chars;
 }
 
 Chars Sequencer::Read(int64_t position) {
   auto found = Find(position);
   Chars chars;
-  std::copy(std::begin(found->second) + (position - found->first),
+  std::copy(std::begin(found->second), // + (position - found->first),
             std::end(found->second),
-            std::begin(chars));
+            std::back_inserter(chars));
   return chars;
 }
 

@@ -16,8 +16,6 @@
     See the Licences for the specific language governing permissions and limitations relating to
     use of the MaidSafe Software.                                                                 */
 
-#include "maidsafe/common/test.h"
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include "catch.hpp"
 
-int main(int argc, char **argv) {
-  return maidsafe::test::ExecuteMain(argc, argv);
-}

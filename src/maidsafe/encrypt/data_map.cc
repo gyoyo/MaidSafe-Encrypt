@@ -32,40 +32,28 @@ std::string SerialiseDataMap(const DataMap& data_map) {
   protobuf::DataMap proto_data_map;
   if (!data_map.content.empty()) {
     proto_data_map.set_content(data_map.content);
-  } else {
-    for (auto& chunk_detail : data_map.chunks) {
-      protobuf::ChunkDetails* chunk_details = proto_data_map.add_chunk_details();
-      assert(chunk_detail.clean && "cannot serialise a dirty data map");
-      chunk_details->set_post_hash(chunk_detail.post_hash->string());
-      chunk_details->set_pre_hash(chunk_detail.pre_hash->string());
-      chunk_details->set_size(chunk_detail.size);
-    }
+  }
+
+  for (auto& chunk_detail : data_map.chunks) {
+    protobuf::ChunkDetails* chunk_details = proto_data_map.add_chunk_details();
+    assert(chunk_detail.clean && "cannot serialise a dirty data map");
+    chunk_details->set_post_hash(chunk_detail.post_hash->string());
+    chunk_details->set_pre_hash(chunk_detail.pre_hash->string());
+    chunk_details->set_size(chunk_detail.size);
   }
   return proto_data_map.SerializeAsString();
-}
-
-void ExtractChunkDetails(const protobuf::DataMap& proto_data_map, DataMap& data_map) {
-  data_map.chunks.clear();
-  data_map.chunks.reserve(proto_data_map.chunk_details().size());
-  for (auto& chunk : proto_data_map.chunk_details())
-    data_map.chunks.emplace_back(PostHash(Identity(chunk.post_hash())),
-                                 PreHash(Identity(chunk.pre_hash())),
-                                 chunk.size());
 }
 
 DataMap ParseDataMap(const std::string& serialised_data_map) {
   protobuf::DataMap proto_data_map;
   DataMap data_map;
   proto_data_map.ParseFromString(serialised_data_map);
-
-  if (proto_data_map.has_content() && proto_data_map.chunk_details_size() != 0) {
-    data_map.content = proto_data_map.content();
-    ExtractChunkDetails(proto_data_map, data_map);
-  } else if (proto_data_map.has_content()) {
-    data_map.content = proto_data_map.content();
-  } else if (proto_data_map.chunk_details_size() != 0) {
-    ExtractChunkDetails(proto_data_map, data_map);
-  }
+  data_map.content = proto_data_map.content();
+  data_map.chunks.reserve(proto_data_map.chunk_details().size());
+  for (auto& chunk : proto_data_map.chunk_details())
+    data_map.chunks.emplace_back(PostHash(Identity(chunk.post_hash())),
+                                 PreHash(Identity(chunk.pre_hash())),
+                                 chunk.size());
   return data_map;
 }
 
