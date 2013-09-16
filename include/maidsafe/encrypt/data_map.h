@@ -62,7 +62,7 @@ struct DataMap {
       clean(false),
       size(0) {}
 
-    ChunkDetails(Identity post_hash, Identity pre_hash, uint32_t size)
+    ChunkDetails(PostHash post_hash, PreHash pre_hash, uint32_t size)
       : post_hash(post_hash),
         pre_hash(pre_hash),
         clean(true),

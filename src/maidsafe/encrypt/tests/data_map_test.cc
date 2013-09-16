@@ -43,11 +43,11 @@ TEST_CASE( "Data Map Basic construction", "[beh] [data_map]" ) {
   DataMap data_map1, data_map2, data_map3, data_map4;
   std::string test_string("abcdef");
   auto a = PostHash(Identity(crypto::Hash<crypto::SHA512>(std::string("a"))));
-  auto b = PostHash(Identity(crypto::Hash<crypto::SHA512>(std::string("b"))));
+  auto b = PreHash(Identity(crypto::Hash<crypto::SHA512>(std::string("b"))));
   data_map1.chunks.emplace_back(a, b, 12);
   data_map2.chunks.emplace_back(a, b, 12);
   CHECK(data_map1 == data_map2);
-  data_map2.chunks.emplace_back(b, a, 12);
+  data_map2.chunks.emplace_back(a, b, 11);
   CHECK(data_map1 != data_map2);
   auto serialised_data_map = SerialiseDataMap(data_map1);
   CHECK_FALSE(serialised_data_map.empty());
