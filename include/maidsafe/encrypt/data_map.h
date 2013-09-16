@@ -23,13 +23,18 @@
 #include <vector>
 #include <tuple>
 
+#include "maidsafe/common/types.h"
 #include "maidsafe/encrypt/utils.h"
 
 namespace maidsafe {
 
 namespace encrypt {
-typedef detail::BoundedString<64, 64> PreHash;
-typedef detail::BoundedString<64, 64> PostHash;
+
+
+typedef TaggedValue<Identity, struct PreHashTag> PreHash;
+typedef TaggedValue<Identity, struct PostHashTag> PostHash;
+
+
 // move only! datamap object
 
 struct DataMap {
@@ -52,36 +57,36 @@ struct DataMap {
   }
 
   struct ChunkDetails {
-    ChunkDetails() : hash(),
+    ChunkDetails() : post_hash(),
       pre_hash(),
       clean(false),
       size(0) {}
 
-    ChunkDetails(Identity hash, Identity pre_hash, uint32_t size)
-      : hash(hash),
+    ChunkDetails(Identity post_hash, Identity pre_hash, uint32_t size)
+      : post_hash(post_hash),
         pre_hash(pre_hash),
         clean(true),
         size(size) {}
 
     ChunkDetails(const ChunkDetails& other)
-      : hash(other.hash),
+      : post_hash(other.post_hash),
         pre_hash(other.pre_hash),
         clean(other.clean),
         size(other.size){}
 
    ChunkDetails(ChunkDetails&& other)
-    : hash(std::move(other.hash)),
+    : post_hash(std::move(other.post_hash)),
       pre_hash(std::move(other.pre_hash)),
       clean(std::move(other.clean)),
       size(std::move(other.size)){}
 
    friend
     bool operator==(const ChunkDetails& lhs, const ChunkDetails& rhs)  {
-      return std::tie(lhs.hash,
+      return std::tie(lhs.post_hash,
                       lhs.pre_hash,
                       lhs.clean,
                       lhs.size) ==
-          std::tie(rhs.hash,
+          std::tie(rhs.post_hash,
                    rhs.pre_hash,
                    rhs.clean,
                    rhs.size);
@@ -91,8 +96,8 @@ struct DataMap {
       return !operator==(lhs, rhs);
     }
 
-    PostHash hash;  // SHA512 of processed chunk
-    PreHash pre_hash;  // SHA512 of unprocessed src data
+    PostHash post_hash;  // hash of processed chunk
+    PreHash pre_hash;  // hash of unprocessed src data
     bool clean;  // requires to be re-encrypted (new data available)
     uint32_t size;  // Size of unprocessed source data in bytes
   };

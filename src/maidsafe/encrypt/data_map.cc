@@ -36,8 +36,8 @@ std::string SerialiseDataMap(const DataMap& data_map) {
     for (auto& chunk_detail : data_map.chunks) {
       protobuf::ChunkDetails* chunk_details = proto_data_map.add_chunk_details();
       assert(chunk_detail.clean && "cannot serialise a dirty data map");
-      chunk_details->set_hash(chunk_detail.hash.string());
-      chunk_details->set_pre_hash(chunk_detail.pre_hash.string());
+      chunk_details->set_post_hash(chunk_detail.post_hash->string());
+      chunk_details->set_pre_hash(chunk_detail.pre_hash->string());
       chunk_details->set_size(chunk_detail.size);
     }
   }
@@ -48,9 +48,9 @@ void ExtractChunkDetails(const protobuf::DataMap& proto_data_map, DataMap& data_
   data_map.chunks.clear();
   data_map.chunks.reserve(proto_data_map.chunk_details().size());
   for (auto& chunk : proto_data_map.chunk_details())
-    data_map.chunks.emplace_back(DataMap::ChunkDetails(PostHash(chunk.hash()),
-                                                       PreHash(chunk.pre_hash()),
-                                                       chunk.size()));
+    data_map.chunks.emplace_back(PostHash(Identity(chunk.post_hash())),
+                                 PreHash(Identity(chunk.pre_hash())),
+                                 chunk.size());
 }
 
 DataMap ParseDataMap(const std::string& serialised_data_map) {

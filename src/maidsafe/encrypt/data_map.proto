@@ -19,7 +19,7 @@
 package maidsafe.encrypt.protobuf;
 
 message ChunkDetails {
-  required bytes hash = 1;
+  required bytes post_hash = 1;
   required bytes pre_hash = 2;
   required uint32 size = 3;
 }
