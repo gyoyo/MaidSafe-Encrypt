@@ -68,13 +68,15 @@ std::map<int64_t, Chars>::iterator Sequencer::Find(int64_t position) {
     });
 }
 
-Chars Sequencer::Fetch(int64_t position) {
+Chars Sequencer::Fetch(int64_t position, int32_t length) {
   auto found = Find(position);
   Chars chars;
   if (found == std::end(blocks_))
       return chars;
+  auto end = std::min(std::begin(found->second) + (position - found->first) + length,
+                      std::end(found->second));
   std::move(std::begin(found->second) + (position - found->first),
-            std::end(found->second),
+            end,
             std::back_inserter(chars));
  found->second.erase(std::begin(found->second) + (position - found->first),
                       std::end(found->second));
@@ -83,11 +85,15 @@ Chars Sequencer::Fetch(int64_t position) {
   return chars;
 }
 
-Chars Sequencer::Read(int64_t position) {
+Chars Sequencer::Read(int64_t position, int32_t length) {
   auto found = Find(position);
   Chars chars;
-  std::copy(std::begin(found->second), // + (position - found->first),
-            std::end(found->second),
+  if (found == std::end(blocks_))
+      return chars;
+  auto end = std::min(std::begin(found->second) + (position - found->first) + length,
+                      std::end(found->second));
+  std::copy(std::begin(found->second) + (position - found->first),
+            end,
             std::back_inserter(chars));
   return chars;
 }
@@ -97,11 +103,11 @@ void Sequencer::Truncate(int64_t position) {
     return;
   auto found = Find(position);
   if (found->first == position) {
-    blocks_.erase(found, blocks_.end());
+    blocks_.erase(found, std::end(blocks_));
   } else {
     found->second.erase(std::begin(found->second) + position - found->first,
                         std::end(found->second));
-    blocks_.erase(++found, blocks_.end());
+    blocks_.erase(++found, std::end(blocks_));
   }
 }
 

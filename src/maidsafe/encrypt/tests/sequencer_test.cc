@@ -35,12 +35,13 @@ TEST_CASE( "Basic construction", "[beh] [sequencer]" ) {
   std::string test_string("asdfljk");
   CHECK_NOTHROW(sequencer.Write(test_string , 12));
   CHECK(sequencer.size() == test_string.size());
-  CHECK(sequencer.Read(12) == test_string);
+  CHECK(sequencer.Read(12, 7) == test_string);
   CHECK_NOTHROW(sequencer.Truncate(14));
-  CHECK(sequencer.Read(12) == "as");
-  CHECK(sequencer.Fetch(12) == "as");
-  CHECK(sequencer.Fetch(12).empty());
-  CHECK(sequencer.Read(12).empty());
+  CHECK(sequencer.Read(12, 7) == "as");  // try and read past end
+  CHECK(sequencer.Read(12, 2) == "as");
+  CHECK(sequencer.Fetch(12, 7) == "as");  // try and read past end
+  CHECK(sequencer.Fetch(12, 2).empty());
+  CHECK(sequencer.Read(12, 0).empty());
   CHECK(sequencer.size() == 0);
   CHECK_NOTHROW(sequencer.Write(test_string , 12));
   CHECK(sequencer.size() == test_string.size());

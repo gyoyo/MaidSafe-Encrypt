@@ -40,9 +40,9 @@ class Sequencer {
   void Write(Chars data, int64_t position);
   std::map<int64_t, Chars>::iterator Find(int64_t position);
   // Returns and removes the block of sequenced data at position in the map.
-  Chars Fetch(int64_t position);
+  Chars Fetch(int64_t position, int32_t length);
   // Returns a copy block of sequenced data at position in the map.
-  Chars Read(int64_t position);
+  Chars Read(int64_t position, int32_t length);
   // Removes all blocks after position, and reduces any block spanning position
   // to terminate at position.
   void Truncate(int64_t position);
