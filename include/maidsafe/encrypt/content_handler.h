@@ -97,11 +97,27 @@ class ContentHandler {
   }
 
   // if write to existing position in data map and it's clean then download that chunk
+  // plus next 2 chunks
   // decrypt and write to sequencer
-  void Write(const char* data, const uint32_t &length, int64_t position);
+  void Write(const char* data, const uint32_t &length, int64_t position) {
+      // chunks at this position mark dirty
+      // if chunk at position not downloaded / wait
+      // apply
+  }
+
   // read from sequencer, as with above if chunk is on net get it first
-  char* Read(int64_t position, int32_t length);
-  void Truncate(int64_t position);
+  char* Read(int64_t position, int32_t length) {
+     // if chunk at position !downloaded block and download
+      // apply
+  }
+
+  void Truncate(int64_t position) {
+    size_ = position;
+    sequencer_.Truncate(position);
+    // remove datamap chunks after this position
+    // invalidate all chunks, possibly
+  }
+
   // add private members to handle encryption and update of data map.
   DataMap Flush();  // old data map is replaced with new datamap (copy)
   DataMap Close();  // Move
@@ -112,6 +128,7 @@ private:
   WriteResults doClose();
   Sequencer sequencer_;
   SelfEncryptor self_encryptor_;
+  int64_t size_;
 };
 
 // swap

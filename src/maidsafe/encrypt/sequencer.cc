@@ -109,6 +109,7 @@ void Sequencer::Truncate(int64_t position) {
                         std::end(found->second));
     blocks_.erase(++found, std::end(blocks_));
   }
+
 }
 
 int64_t Sequencer::size() {

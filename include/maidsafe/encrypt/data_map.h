@@ -101,7 +101,9 @@ struct DataMap {
     bool clean;  // requires to be re-encrypted (new data available)
     uint32_t size;  // Size of unprocessed source data in bytes
   };
-
+  // return vector of data (may be empty) / mark dirty
+  std::vector<PostHash> DataAtPosition(int64_t position, int32_t length);
+  void MarkDataDownloaded(std::vector<PostHash> chunks);
 
   std::vector<ChunkDetails> chunks;
   std::string content;  // Whole data item, if small enough
