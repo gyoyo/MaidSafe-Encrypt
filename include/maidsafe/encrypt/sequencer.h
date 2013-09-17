@@ -31,9 +31,9 @@ namespace encrypt {
 
 class Sequencer {
  public:
-//  Sequencer(DataMap data_map, GetDataFromStore get_data_functor) : blocks_() {}
+  Sequencer(DataMap /*data_map*/, GetDataFromStore /*get_data_functor*/) : blocks_() {}
   Sequencer() : blocks_() {}  // open new file (or empty file)
-//  explicit Sequencer(DataMap data_map) : blocks_() {}  // open new file (or empty file)
+  explicit Sequencer(DataMap /*data_map*/) : blocks_() {}  // open new file (or empty file)
   // Adds a new block to the map.  If this overlaps or joins any existing blocks,
   // the new block is set to cover the total span of all the overlapping blocks
   // and the old blocks are removed.
@@ -47,6 +47,7 @@ class Sequencer {
   // to terminate at position.
   void Truncate(int64_t position);
   void clear() { blocks_.clear(); }
+  int64_t HighestPosition();
   int64_t size();
 
  private:

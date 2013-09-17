@@ -22,17 +22,17 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#ifdef __MSVC__
-#  pragma warning(push, 1)
-#endif
-#include "cryptopp/aes.h"
-#include "cryptopp/gzip.h"
-#include "cryptopp/modes.h"
-#include "cryptopp/mqueue.h"
-#include "cryptopp/sha.h"
-#ifdef __MSVC__
-#  pragma warning(pop)
-#endif
+//#ifdef __MSVC__
+//#  pragma warning(push, 1)
+//#endif
+//#include "cryptopp/aes.h"
+//#include "cryptopp/gzip.h"
+//#include "cryptopp/modes.h"
+//#include "cryptopp/mqueue.h"
+//#include "cryptopp/sha.h"
+//#ifdef __MSVC__
+//#  pragma warning(pop)
+//#endif
 
 #include "maidsafe/common/crypto.h"
 #include "maidsafe/data_types/immutable_data.h"
@@ -103,7 +103,8 @@ DataMap DecryptDataMap(const Identity& parent_id,
                        const Identity& this_id,
                        const std::string &encrypted_data_map);
 
-typedef std::function<ImmutableData(ImmutableData::Name)> GetDataFromStore;
+//typedef std::function<ImmutableData(ImmutableData::Name)>
+typedef std::string GetDataFromStore;
 
 
 

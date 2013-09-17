@@ -109,7 +109,12 @@ void Sequencer::Truncate(int64_t position) {
                         std::end(found->second));
     blocks_.erase(++found, std::end(blocks_));
   }
+}
 
+int64_t Sequencer::HighestPosition() {
+  auto last = std::end(blocks_);
+  --last;
+  return last->first + last->second.size();
 }
 
 int64_t Sequencer::size() {

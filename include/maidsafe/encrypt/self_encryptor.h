@@ -64,8 +64,8 @@ namespace encrypt {
 
 class SelfEncryptor {
  public:
-  explicit SelfEncryptor(); //Sequencer sequencer);
-  ~SelfEncryptor();
+  explicit SelfEncryptor() = default; //Sequencer sequencer);
+  ~SelfEncryptor() {}
   bool Encrypt();
 
 //  int64_t size() const {

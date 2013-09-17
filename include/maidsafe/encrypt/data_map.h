@@ -39,11 +39,11 @@ typedef TaggedValue<Identity, struct PostHashTag> PostHash;
 
 struct DataMap {
   DataMap() : chunks(), content() {}
-
- DataMap(DataMap&& other)
- : chunks(std::move(other.chunks)),
-   content(std::move(other.content)) {}
-
+  DataMap(const DataMap&) = default;
+ DataMap(DataMap&& other) = default;
+// : chunks(std::move(other.chunks)),
+//   content(std::move(other.content)) {}
+  DataMap& operator=(DataMap&) = default;
  ~DataMap() {}
 
  friend
@@ -108,8 +108,8 @@ struct DataMap {
   std::vector<ChunkDetails> chunks;
   std::string content;  // Whole data item, if small enough
 private:
-  DataMap(const DataMap&);
-  DataMap& operator=(DataMap&);
+
+
 };
 
 std::string SerialiseDataMap(const DataMap& data_map);

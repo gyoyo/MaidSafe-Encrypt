@@ -39,7 +39,7 @@ class ContentHandler {
  public:
   ContentHandler(DataMap data_map, GetDataFromStore get_data_functor)
     : sequencer_(data_map, get_data_functor),
-      self_encryptor_(sequencer_) {}
+      self_encryptor_(){}
 
   explicit ContentHandler(DataMap data_map)
     : data_map_(data_map),
@@ -47,7 +47,8 @@ class ContentHandler {
 
   ContentHandler()
     : data_map_(),
-      get_data_functor_() {}
+      get_data_functor_(),
+      size_() {}
 
   ContentHandler(const ContentHandler& other)
     : data_map_(other.data_map_),
@@ -59,10 +60,7 @@ class ContentHandler {
 
   ~ContentHandler() {}
 
-  ContentHandler& operator=(ContentHandler other) {
-    swap(*this, other);
-    return *this;
-  }
+  ContentHandler& operator=(ContentHandler& other) = default;
 
   friend
   bool operator==(const ContentHandler& lhs, const ContentHandler& rhs) {
@@ -75,45 +73,34 @@ class ContentHandler {
     return !operator==(lhs, rhs);
   }
 
-  friend
-  bool operator<(const ContentHandler& lhs, const ContentHandler& rhs) {
-    return std::tie(lhs.data_map_, lhs.get_data_functor_)
-        < std::tie(rhs.data_map_, rhs.get_data_functor_);
-  }
-
-  friend
-  bool operator>(const ContentHandler& lhs, const ContentHandler& rhs) {
-    return operator<(rhs, lhs);
-  }
-
-  friend
-  bool operator<=(const ContentHandler& lhs, const ContentHandler& rhs) {
-    return !operator>(lhs, rhs);
-  }
-
-  friend
-  bool operator>=(const ContentHandler& lhs, const ContentHandler& rhs) {
-    return !operator<(lhs, rhs);
-  }
-
   // if write to existing position in data map and it's clean then download that chunk
   // plus next 2 chunks
   // decrypt and write to sequencer
   void Write(const char* data, const uint32_t &length, int64_t position) {
-      // chunks at this position mark dirty
-      // if chunk at position not downloaded / wait
-      // apply
+    // chunks at this position mark dirty
+    // if chunk at position not downloaded / wait
+    // apply
+    Chars chars(data, length);
+    sequencer_.Write(chars, position);
+    if (sequencer_.HighestPosition() > size_)
+      size_ = sequencer_.HighestPosition();
   }
 
   // read from sequencer, as with above if chunk is on net get it first
   char* Read(int64_t position, int32_t length) {
-     // if chunk at position !downloaded block and download
-      // apply
+    // if chunk at position !downloaded block and download
+    // apply
+
+    auto res =  sequencer_.Read(position, length);
+    char* a = new char[res.size() + 1];
+    memcpy(a, res.c_str(), res.size());
+    return a;
   }
 
   void Truncate(int64_t position) {
     size_ = position;
     sequencer_.Truncate(position);
+    size_ = position;
     // remove datamap chunks after this position
     // invalidate all chunks, possibly
   }
@@ -121,22 +108,18 @@ class ContentHandler {
   // add private members to handle encryption and update of data map.
   DataMap Flush();  // old data map is replaced with new datamap (copy)
   DataMap Close();  // Move
-  int64_t size() const;
+  int64_t size() const { return size_; }
 
-private:
+ private:
   WriteResults doFlush();
   WriteResults doClose();
   Sequencer sequencer_;
   SelfEncryptor self_encryptor_;
+  DataMap data_map_;
+  GetDataFromStore get_data_functor_;
   int64_t size_;
 };
 
-// swap
-void swap(ContentHandler& lhs, ContentHandler& rhs) /* noexcept */ {
-  using std::swap;
-  swap(lhs.data_map_, rhs.data_map_);
-  swap(lhs.get_data_functor_, rhs.get_data_functor_);
-}
 
 
 
