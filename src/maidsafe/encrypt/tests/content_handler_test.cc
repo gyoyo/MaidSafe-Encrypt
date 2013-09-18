@@ -34,7 +34,7 @@ TEST_CASE( "Content Handler Basic construction", "[beh] [content_handler]") {
   CHECK(content_handler.size() == 12  + static_cast<int64_t>(test_string.size()));
   CHECK(content_handler.Read(12, 7) == test_string);
   CHECK_NOTHROW(content_handler.Truncate(14));
-  CHECK(content_handler.Read(12, 7) != std::string("as"));  // read past end spurious chars exist
+  CHECK(content_handler.Read(12, 7) == std::string("as"));  // read past end spurious chars exist
   CHECK(std::string(content_handler.Read(12, 2),2) == std::string("as"));
   CHECK_NOTHROW(content_handler.Write(test_string.data(), test_string.size() , 12));
   CHECK(content_handler.size() == 19);

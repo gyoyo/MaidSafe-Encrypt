@@ -46,6 +46,15 @@ struct DataMap {
   DataMap& operator=(DataMap&) = default;
  ~DataMap() {}
 
+  friend
+  void swap(DataMap& lhs, DataMap& rhs) /* noexcept */ {
+      using std::swap;
+      swap(lhs.chunks, rhs.chunks);
+      //swap(lhs.second, rhs.);
+  }
+
+
+
  friend
   bool operator==(const DataMap& lhs, const DataMap& rhs)  {
     return std::tie(lhs.chunks, lhs.content) == std::tie(rhs.chunks, rhs.content);

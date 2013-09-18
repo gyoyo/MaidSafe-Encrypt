@@ -63,6 +63,14 @@ class ContentHandler {
   ContentHandler& operator=(ContentHandler& other) = default;
 
   friend
+  void swap(ContentHandler& lhs, ContentHandler& rhs) /* noexcept */ {
+      using std::swap;
+      swap(lhs.data_map_, rhs.data_map_);
+      //swap(lhs.second, rhs.);
+  }
+
+
+  friend
   bool operator==(const ContentHandler& lhs, const ContentHandler& rhs) {
     return std::tie(lhs.data_map_, lhs.get_data_functor_)
         == std::tie(rhs.data_map_, rhs.get_data_functor_);
